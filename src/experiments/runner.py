@@ -1,0 +1,127 @@
+from logging import config
+import time
+import random
+import numpy as np
+from pathlib import Path
+
+from src.sampling.config import SamplingConfig
+from src.experiments.common import compute_ground_truth
+from src.experiments.experiment_fixed_shift import run_single_case_exp1
+from src.experiments.experiment_optimize_shift import run_single_case_exp2
+from src.experiments.save_result import ResultCSVWriter
+from src.experiments.test_data import get_pair_polygons
+from src.experiments.utils import enrich_result
+
+
+# config
+
+BASE_PATH = Path(__file__).parents[2] / "data" 
+N_VALUES = [25, 100, 400, 1600, 6400]
+METHODS = ["raster", "net"]
+NUM_CASES = 30
+SEED = 42
+
+dataset_rng = random.Random(SEED)
+ground_truth_rng = random.Random(SEED + 1)
+experiment_rng = random.Random(SEED + 2)
+exp1_rng = random.Random(experiment_rng.randint(0, 10**9))
+exp2_rng = random.Random(experiment_rng.randint(0, 10**9))
+np_rng = np.random.default_rng(SEED)
+
+Path("results/results_exp1.csv").unlink(missing_ok=True)
+Path("results/results_exp2.csv").unlink(missing_ok=True)
+
+exp1_writer = ResultCSVWriter(
+    "results/results_exp1.csv",
+    fieldnames=[
+        "experiment",
+        "method",
+        "total_points",
+        "H_reference",
+        "H_est",
+        "signed_H_err",
+        "abs_H_err",
+        "A_name",
+        "B_name",
+        "case",
+        "time"
+    ]
+)
+
+exp2_writer = ResultCSVWriter(
+    "results/results_exp2.csv",
+    fieldnames=[
+        "experiment",
+        "method",
+        "total_points",
+        "H_reference",
+        "H_est",
+        "x_err",
+        "signed_H_err",
+        "abs_H_err",
+        "A_name",
+        "B_name",
+        "case",
+        "time"
+    ]
+)
+
+for case_id in range(NUM_CASES):
+    print(f"\n[CASE {case_id}]")
+
+    case_data = get_pair_polygons(BASE_PATH, dataset_rng)
+    A = case_data["A"]
+    B = case_data["B"]
+
+    ground_truth_config = SamplingConfig(
+        method="raster", 
+        total_points=10000, 
+        rng=ground_truth_rng      
+)
+
+    x_reference, H_reference, A_dense, B_dense, Q0 = compute_ground_truth(A, B, ground_truth_config) 
+
+    for method in METHODS:
+        for n in N_VALUES:
+            print(f"  method={method}, n={n}")
+
+            exp1_config = SamplingConfig(method=method, total_points=n, rng=exp1_rng)
+            exp2_config = SamplingConfig(method=method, total_points=n, rng=exp2_rng)
+
+            #First experiment
+
+            start = time.time()
+
+            first_result = run_single_case_exp1(
+                A=A,
+                B=B,
+                config=exp1_config,
+                x_reference=x_reference,
+                H_reference=H_reference
+            )
+
+            first_result = enrich_result(first_result, case_data, case_id, time.time() - start) 
+
+            exp1_writer.write(first_result)
+
+            #Second experiment
+
+            start = time.time()
+
+            second_result = run_single_case_exp2(
+                A=A,
+                B=B,
+                config=exp2_config,
+                Q0=Q0,
+                A_dense=A_dense,
+                B_dense=B_dense,
+                x_reference=x_reference,
+                H_reference=H_reference
+            )
+
+            second_result = enrich_result(second_result, case_data, case_id, time.time() - start)
+
+            exp2_writer.write(second_result)
+
+exp1_writer.close()
+exp2_writer.close()

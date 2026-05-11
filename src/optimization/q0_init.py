@@ -1,8 +1,9 @@
-from geometry import Point, Polygon, BoundingBox
 from typing import List
 
+from src.core.geometry import Point, Shape, BoundingBox
 
-def initQ0(A: Polygon, B: Polygon) -> List[float]:
+
+def initQ0(A: Shape, B: Shape) -> List[float]:
     box_a = BoundingBox(A)
     box_b = BoundingBox(B)
     

@@ -1,12 +1,13 @@
 from scipy.spatial import KDTree
 from typing import Tuple, List
-from geometry import Point, Polygon
-from polygon_hausdorff_fast import hausdorff_with_witness
+
+from src.core.geometry import Point, Shape
+from src.metrics.polygon_hausdorff import hausdorff_with_witness
 
 
 def find_optimal_translation_grid(
-    A: Polygon, 
-    B: Polygon, 
+    A: Shape, 
+    B: Shape, 
     tree_A: KDTree, 
     tree_B: KDTree,  
     Q0: List[float], 
@@ -29,7 +30,7 @@ def find_optimal_translation_grid(
             y = ymin + j * dy
             
             shift = Point(x, y)    
-            val, _ = hausdorff_with_witness(A, B, tree_A, tree_B, shift)
+            val, _, _ = hausdorff_with_witness(A, B, tree_A, tree_B, shift)
             
             results.append((x, y, val))
             

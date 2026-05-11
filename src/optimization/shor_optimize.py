@@ -1,13 +1,14 @@
 import math
 from scipy.spatial import KDTree
 from typing import Tuple
-from geometry import Point, Polygon
-from polygon_hausdorff_fast import hausdorff_with_witness
+
+from src.core.geometry import Point, Shape
+from src.metrics.polygon_hausdorff import hausdorff_with_witness
 
 
 def shor_optimize(
-    A: Polygon, 
-    B: Polygon, 
+    A: Shape, 
+    B: Shape, 
     tree_A: KDTree, 
     tree_B: KDTree, 
     x0: Point,  
@@ -21,7 +22,7 @@ def shor_optimize(
     hausdorff_distance = float("inf")
 
     for i in range(1, max_iter + 1):
-        distance, witness = hausdorff_with_witness(A, B, tree_A, tree_B, x)
+        distance, witness, source = hausdorff_with_witness(A, B, tree_A, tree_B, x)
         p, q = witness
 
         if distance < hausdorff_distance:
@@ -38,8 +39,12 @@ def shor_optimize(
         
         norm = math.sqrt(norm_sq)
 
-        gx = dx / norm
-        gy = dy / norm
+        if source == "A_to_B":
+            gx = dx / norm
+            gy = dy / norm
+        else:
+            gx = -dx / norm
+            gy = -dy / norm
 
         alpha = alpha0 / math.sqrt(i)
         
