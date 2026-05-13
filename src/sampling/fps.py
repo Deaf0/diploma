@@ -38,5 +38,8 @@ def fps(points: Shape, n: int, rng: random.Random) -> Shape:
             
         selected.append(points[idx])
         chosen[idx] = True
-        
+    
+    if len(selected) != n:
+        raise RuntimeError("Error: amount selected elements differs from n")
+
     return selected

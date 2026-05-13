@@ -7,9 +7,10 @@ class SamplingConfig:
     method: str
     total_points: int
 
+    rng: random.Random 
+
     boundary_ratio: float = 0.3
     samples_per_cell: int = 1
 
-    rng: random.Random | None = None
 
     

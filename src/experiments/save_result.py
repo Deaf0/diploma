@@ -19,6 +19,7 @@ class ResultCSVWriter:
 
     def write(self, row: dict):
         self.writer.writerow(row)
+        self.file.flush()
 
     def close(self):
         self.file.close()

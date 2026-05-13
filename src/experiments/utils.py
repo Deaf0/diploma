@@ -4,3 +4,14 @@ def enrich_result(result: dict, case_data: dict, case_id: int, elapsed: float) -
     result["case"] = case_id
     result["time"] = elapsed
     return result
+
+
+def build_error_message(experiment: str, case: int, method: str, total_points: int, error_message: str) -> dict:
+    error_dict = dict()
+
+    error_dict["experiment"] = experiment
+    error_dict["case"] = case
+    error_dict["method"] = method
+    error_dict["total_points"] = total_points
+    error_dict["error_message"] = str(error_message)
+    return error_dict

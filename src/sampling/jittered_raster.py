@@ -80,13 +80,28 @@ def raster_poly(
         rng.shuffle(result)
         return result[:total_points]
 
-    while len(result) < total_points:
+    remaining = total_points - len(result)
+
+    max_attempts = max(1000, remaining * 100)
+
+    attempts = 0
+
+    while len(result) < total_points and attempts < max_attempts:
         x = rng.uniform(min_x, max_x)
         y = rng.uniform(min_y, max_y)
 
         if point_in_polygon_xy(x, y, polygon) != 0:
             result.append(Point(x, y))
 
-    return result[:total_points]
+        attempts += 1
+
+    if len(result) < total_points:
+        raise RuntimeError(
+            f"Could not generate {total_points} points "
+            f"inside polygon after {max_attempts} attempts. "
+            f"Generated only {len(result)}."
+        )
+
+    return result
 
 

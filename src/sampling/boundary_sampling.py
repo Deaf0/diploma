@@ -1,4 +1,5 @@
 import math
+
 from src.core.geometry import Point, Shape
 
 
@@ -12,10 +13,7 @@ def sample_boundary(polygon: Shape, N: int) -> Shape:
         return []
 
     if n == 1:
-        return [polygon[0]] * N
-
-    if N <= n:
-        return polygon[:N]
+        return [polygon[0].copy() for _ in range(N)]
 
     edges = []
     total_length = 0.0
@@ -30,30 +28,26 @@ def sample_boundary(polygon: Shape, N: int) -> Shape:
         total_length += length
 
     if total_length == 0:
-        return [polygon[0]] * N
+        return [polygon[0].copy() for _ in range(N)]
 
-    result = [p.copy() for p in polygon]
-
-    extra_points = N - n
-
-    step = total_length / extra_points
+    result = []
 
     current_edge_idx = 0
-    dist_accum = 0.0
+    accumulated = 0.0
 
-    for k in range(extra_points):
-        target_dist = (k + 0.5) * step
+    for k in range(N):
+        target = ((k + 0.5) * total_length) / N
 
         while (
             current_edge_idx < len(edges) - 1
-            and dist_accum + edges[current_edge_idx][2] < target_dist
+            and accumulated + edges[current_edge_idx][2] < target
         ):
-            dist_accum += edges[current_edge_idx][2]
+            accumulated += edges[current_edge_idx][2]
             current_edge_idx += 1
 
         a, b, edge_len = edges[current_edge_idx]
 
-        local_dist = target_dist - dist_accum
+        local_dist = target - accumulated
 
         if edge_len > 0:
             t = local_dist / edge_len

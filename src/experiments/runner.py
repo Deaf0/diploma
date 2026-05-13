@@ -10,7 +10,7 @@ from src.experiments.experiment_fixed_shift import run_single_case_exp1
 from src.experiments.experiment_optimize_shift import run_single_case_exp2
 from src.experiments.save_result import ResultCSVWriter
 from src.experiments.test_data import get_pair_polygons
-from src.experiments.utils import enrich_result
+from src.experiments.utils import enrich_result, build_error_message
 
 
 # config
@@ -18,7 +18,7 @@ from src.experiments.utils import enrich_result
 BASE_PATH = Path(__file__).parents[2] / "data" 
 N_VALUES = [25, 100, 400, 1600, 6400]
 METHODS = ["raster", "net"]
-NUM_CASES = 30
+NUM_CASES = 2
 SEED = 42
 
 dataset_rng = random.Random(SEED)
@@ -66,6 +66,17 @@ exp2_writer = ResultCSVWriter(
     ]
 )
 
+failure_writer = ResultCSVWriter(
+    "results/failures.csv",
+    fieldnames=[
+        "case",
+        "method",
+        "total_points",
+        "experiment",
+        "error_message"
+    ]
+)
+
 for case_id in range(NUM_CASES):
     print(f"\n[CASE {case_id}]")
 
@@ -78,8 +89,20 @@ for case_id in range(NUM_CASES):
         total_points=10000, 
         rng=ground_truth_rng      
 )
-
-    x_reference, H_reference, A_dense, B_dense, Q0 = compute_ground_truth(A, B, ground_truth_config) 
+    try:
+        x_reference, H_reference, A_dense, B_dense, Q0 = compute_ground_truth(A, B, ground_truth_config) 
+    except Exception as e:
+        error_message = build_error_message(
+                    "[GROUND_TRUTH FAILED]",
+                    case_id,
+                    "no method",
+                    ground_truth_config.total_points,
+                    e
+                )
+        print(error_message)
+        
+        failure_writer.write(error_message)
+        continue
 
     for method in METHODS:
         for n in N_VALUES:
@@ -90,38 +113,73 @@ for case_id in range(NUM_CASES):
 
             #First experiment
 
-            start = time.time()
+            try:
+                start = time.time()
 
-            first_result = run_single_case_exp1(
-                A=A,
-                B=B,
-                config=exp1_config,
-                x_reference=x_reference,
-                H_reference=H_reference
-            )
+                first_result = run_single_case_exp1(
+                    A=A,
+                    B=B,
+                    config=exp1_config,
+                    x_reference=x_reference,
+                    H_reference=H_reference
+                )
 
-            first_result = enrich_result(first_result, case_data, case_id, time.time() - start) 
+                first_result = enrich_result(
+                    first_result,
+                    case_data,
+                    case_id,
+                    time.time() - start
+                )
 
-            exp1_writer.write(first_result)
+                exp1_writer.write(first_result)
+
+            except Exception as e:
+                error_message = build_error_message(
+                    "[EXP1 FAILED]",
+                    case_id,
+                    method,
+                    n,
+                    e
+                )
+                print(error_message)
+                failure_writer.write(error_message)
 
             #Second experiment
 
-            start = time.time()
+            try:
+                start = time.time()
 
-            second_result = run_single_case_exp2(
-                A=A,
-                B=B,
-                config=exp2_config,
-                Q0=Q0,
-                A_dense=A_dense,
-                B_dense=B_dense,
-                x_reference=x_reference,
-                H_reference=H_reference
-            )
+                second_result = run_single_case_exp2(
+                    A=A,
+                    B=B,
+                    config=exp2_config,
+                    Q0=Q0,
+                    A_dense=A_dense,
+                    B_dense=B_dense,
+                    x_reference=x_reference,
+                    H_reference=H_reference
+                )
 
-            second_result = enrich_result(second_result, case_data, case_id, time.time() - start)
+                second_result = enrich_result(
+                    second_result,
+                    case_data,
+                    case_id,
+                    time.time() - start
+                )
 
-            exp2_writer.write(second_result)
+                exp2_writer.write(second_result)
+
+            except Exception as e:
+                error_message = build_error_message(
+                    "[EXP2 FAILED]",
+                    case_id,
+                    method,
+                    n,
+                    e
+                )
+                print(error_message)
+                failure_writer.write(error_message)
 
 exp1_writer.close()
 exp2_writer.close()
+failure_writer.close()

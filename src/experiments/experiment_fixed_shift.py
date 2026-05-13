@@ -46,6 +46,3 @@ def run_single_case_exp1(
         "signed_H_err": H_est - H_reference,
         "abs_H_err": abs(H_est - H_reference)
     }
-
-
-

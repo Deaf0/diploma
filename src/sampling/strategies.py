@@ -5,6 +5,7 @@ from src.sampling.boundary_sampling import sample_boundary
 from src.sampling.point_generator import random_points_in_polygon
 from src.sampling.fps import fps
 from src.sampling.jittered_raster import raster_poly
+from src.sampling.utils import ensure_exact_num_points
 
 
 def build_fps_net(
@@ -20,8 +21,9 @@ def build_fps_net(
     boundary_pts = sample_boundary(polygon, k_boundary)
     candidates = raster_poly(polygon, candidate_multiplier  * k_inner, 1, rng)
     inner_pts = fps(candidates, k_inner, rng)
+    result = boundary_pts + inner_pts
 
-    return boundary_pts + inner_pts
+    return ensure_exact_num_points(result, total_points)
 
 
 def build_jittered_raster_net(
@@ -36,21 +38,6 @@ def build_jittered_raster_net(
 
     boundary_pts = sample_boundary(polygon, k_boundary)
     inner_pts = raster_poly(polygon, k_inner, samples_per_cell, rng)
+    result = boundary_pts + inner_pts
 
-    return boundary_pts + inner_pts
-
-
-if __name__ == "__main__":
-    A = [
-        Point(0, 0),   
-        Point(5, 0),   
-        Point(5, 5),    
-        Point(0, 5),
-        Point(0, 4),   
-        Point(3, 4),   
-        Point(3, 1),   
-        Point(0, 1)    
-    ]
-
-    result = build_jittered_raster_net(A, 100, 0.3, 1, 42)
-    print(len(result), result)
+    return ensure_exact_num_points(result, total_points)
