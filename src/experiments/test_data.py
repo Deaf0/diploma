@@ -44,6 +44,8 @@ def get_pair_polygons(base_path: Path, rng: random.Random) -> dict:
 
     convex_folder = rng.choice(folders)
     nonconvex_folder = rng.choice(folders)
+    while nonconvex_folder == convex_folder:
+        nonconvex_folder = rng.choice(folders)
 
     convex_polygon = get_polygon(convex_folder, "convex")
     nonconvex_polygon = get_polygon(nonconvex_folder, "nonconvex")
