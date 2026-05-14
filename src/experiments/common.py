@@ -6,7 +6,7 @@ from src.metrics.polygon_hausdorff import to_array, hausdorff_with_witness
 from src.optimization.q0_init import initQ0
 from src.optimization.hausdorff_grid_search import find_optimal_translation_grid
 from src.optimization.shor_optimize import shor_optimize
-from src.sampling.strategies import build_fps_net, build_jittered_raster_net
+from src.sampling.strategies import build_n_net, build_fps_net, build_jittered_raster_net
 from src.sampling.config import SamplingConfig
 
 
@@ -20,8 +20,15 @@ def approximate_polygon(polygon: Shape, config: SamplingConfig) -> Shape:
             samples_per_cell=config.samples_per_cell, 
             rng=config.rng
         )
-    elif config.method == "net":
+    elif config.method == "fps":
         return build_fps_net(
+            polygon, 
+            total_points=config.total_points, 
+            boundary_ratio=config.boundary_ratio, 
+            rng=config.rng
+        )
+    elif config.method == "n_net":
+        return build_n_net(
             polygon, 
             total_points=config.total_points, 
             boundary_ratio=config.boundary_ratio, 
