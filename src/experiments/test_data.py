@@ -1,4 +1,5 @@
 import random
+from itertools import combinations
 from pathlib import Path
 
 from src.core.geometry import Point, Shape
@@ -38,22 +39,22 @@ def get_dataset_folders(base_path: Path) -> list[Path]:
     return folders
 
 
-def get_pair_polygons(base_path: Path, rng: random.Random) -> dict:
-
+def build_unique_pairs(base_path: Path) -> list[dict]:
     folders = get_dataset_folders(base_path)
 
-    convex_folder = rng.choice(folders)
-    nonconvex_folder = rng.choice(folders)
-    while nonconvex_folder == convex_folder:
-        nonconvex_folder = rng.choice(folders)
+    pairs = []
 
-    convex_polygon = get_polygon(convex_folder, "convex")
-    nonconvex_polygon = get_polygon(nonconvex_folder, "nonconvex")
+    for folder_a, folder_b in combinations(folders, 2):
 
-    return {
-        "A": convex_polygon, 
-        "B": nonconvex_polygon,
-        "A_name": convex_folder.name,
-        "B_name": nonconvex_folder.name
-    } 
+        polygon_a = get_polygon(folder_a, "convex")
+        polygon_b = get_polygon(folder_b, "nonconvex")
+
+        pairs.append({
+            "A": polygon_a,
+            "B": polygon_b,
+            "A_name": folder_a.name,
+            "B_name": folder_b.name
+        })
+
+    return pairs 
 
